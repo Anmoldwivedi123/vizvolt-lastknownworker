@@ -2,9 +2,22 @@ import psycopg2
 import time
 import os
 from datetime import datetime
+import threading
+from fastapi import FastAPI
+import uvicorn
 
+app = FastAPI()
 
+@app.get("/")
+def health():
+    return {
+        "status": "ok",
+        "service": "vizvolt-last-known-worker"
+    }
 
+def start_web():
+    uvicorn.run(app, host="0.0.0.0", port=8800)
+    
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "database": os.getenv("DB_NAME"),
@@ -134,6 +147,7 @@ DO UPDATE SET
 
 def main():
     print("Last Known Data worker started...")
+    threading.Thread(target=start_web, daemon=True).start()
     while True:
         try:
             conn = get_conn()
